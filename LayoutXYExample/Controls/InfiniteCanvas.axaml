@@ -2,6 +2,14 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:controls="clr-namespace:LayoutXYExample.Controls">
 
+    <Design.PreviewWith>
+        <Border Padding="20" Width="300" Height="200">
+            <controls:InfiniteCanvas>
+                <Rectangle Width="50" Height="50" Fill="Red"/>
+            </controls:InfiniteCanvas>
+        </Border>
+    </Design.PreviewWith>
+
     <ControlTheme x:Key="{x:Type controls:InfiniteCanvas}" 
                   TargetType="controls:InfiniteCanvas">
         
@@ -14,8 +22,9 @@
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}">
                     
-                    <Canvas RenderTransform="{TemplateBinding ViewportTransform}" 
+                    <Canvas RenderTransform="{TemplateBinding ViewportTransform}"
                             RenderTransformOrigin="0,0">
+                        
                         <ContentPresenter Name="PART_ContentPresenter"
                                           Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}" />

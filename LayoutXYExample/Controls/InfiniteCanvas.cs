@@ -17,12 +17,15 @@ public class InfiniteCanvas : ContentControl
     public static readonly StyledProperty<double> ViewportZoomProperty =
         AvaloniaProperty.Register<InfiniteCanvas, double>(nameof(ViewportZoom), 1.0);
 
+    // ВАЖНО: Nodify регистрирует свойства с новым TransformGroup().
+    // Но обновлять их мы будем через SetCurrentValue, заменяя объект целиком.
     public static readonly StyledProperty<Transform> ViewportTransformProperty =
-        AvaloniaProperty.Register<InfiniteCanvas, Transform>(nameof(ViewportTransform));
+        AvaloniaProperty.Register<InfiniteCanvas, Transform>(nameof(ViewportTransform), new TransformGroup());
 
     public static readonly StyledProperty<Transform> DpiScaledViewportTransformProperty =
         AvaloniaProperty.Register<InfiniteCanvas, Transform>(nameof(DpiScaledViewportTransform), new TransformGroup());
 
+    // Настройки
     public static readonly StyledProperty<double> MinZoomProperty = 
         AvaloniaProperty.Register<InfiniteCanvas, double>(nameof(MinZoom), 0.1);
     public static readonly StyledProperty<double> MaxZoomProperty = 
@@ -31,18 +34,6 @@ public class InfiniteCanvas : ContentControl
     #endregion
 
     #region Property Wrappers
-    
-    public double MinZoom
-    {
-        get => GetValue(MinZoomProperty);
-        set => SetValue(MinZoomProperty, value);
-    }
-
-    public double MaxZoom
-    {
-        get => GetValue(MaxZoomProperty);
-        set => SetValue(MaxZoomProperty, value);
-    }
 
     public Point ViewportLocation
     {
@@ -68,13 +59,19 @@ public class InfiniteCanvas : ContentControl
         set => SetValue(DpiScaledViewportTransformProperty, value);
     }
 
+    public double MinZoom { get => GetValue(MinZoomProperty); set => SetValue(MinZoomProperty, value); }
+    public double MaxZoom { get => GetValue(MaxZoomProperty); set => SetValue(MaxZoomProperty, value); }
+
     #endregion
 
     #region Internal Transforms
 
-    private readonly TranslateTransform _translateTransform = new();
-    private readonly ScaleTransform _scaleTransform = new();
-    private readonly TranslateTransform _dpiTranslateTransform = new();
+    // Мы храним сами объекты трансформаций (Scale и Translate) как поля класса.
+    // Это позволяет нам менять их значения (.X, .Y, .ScaleX), 
+    // но при обновлении свойства мы будем оборачивать их в НОВЫЙ TransformGroup.
+    private readonly TranslateTransform _translateTransform = new TranslateTransform();
+    private readonly ScaleTransform _scaleTransform = new ScaleTransform();
+    private readonly TranslateTransform _dpiTranslateTransform = new TranslateTransform();
 
     #endregion
 
@@ -89,23 +86,19 @@ public class InfiniteCanvas : ContentControl
     static InfiniteCanvas()
     {
         FocusableProperty.OverrideDefaultValue<InfiniteCanvas>(true);
+
+        // При изменении данных вызываем пересчет визуальных трансформаций
         ViewportLocationProperty.Changed.AddClassHandler<InfiniteCanvas>((x, e) => x.UpdateTransforms());
         ViewportZoomProperty.Changed.AddClassHandler<InfiniteCanvas>((x, e) => x.UpdateTransforms());
     }
 
     public InfiniteCanvas()
     {
-        // 1. Transform для Контента
-        var group = new TransformGroup();
-        group.Children.Add(_scaleTransform);
-        group.Children.Add(_translateTransform);
-        ViewportTransform = group;
-
-        // Обязательно инициализируем DPI матрицу, чтобы Binding в XAML не получил null
-        var dpiGroup = new TransformGroup();
-        dpiGroup.Children.Add(_scaleTransform);
-        dpiGroup.Children.Add(_dpiTranslateTransform);
-        DpiScaledViewportTransform = dpiGroup;
+        // Принудительно вызываем обновление при старте, чтобы создать начальные группы
+        UpdateTransforms();
+        
+        // Подписка на изменение DPI (если перетащили окно на другой монитор)
+        this.EffectiveViewportChanged += (_, _) => UpdateTransforms();
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -114,41 +107,74 @@ public class InfiniteCanvas : ContentControl
         UpdateTransforms();
     }
 
+    /// <summary>
+    /// Этот метод реализует логику из NodifyEditor.cs -> UpdateViewportTransform.
+    /// КЛЮЧЕВОЙ МОМЕНТ: Мы создаем new TransformGroup() каждый раз.
+    /// Это заставляет систему биндинга Avalonia увидеть изменение свойства и обновить DrawingBrush.
+    /// </summary>
     private void UpdateTransforms()
     {
-        // Обновляем Scale
+        // 1. Обновляем значения во внутренних объектах
         _scaleTransform.ScaleX = ViewportZoom;
         _scaleTransform.ScaleY = ViewportZoom;
 
-        // Обновляем Translate (-Location * Zoom)
         double x = -ViewportLocation.X * ViewportZoom;
         double y = -ViewportLocation.Y * ViewportZoom;
 
         _translateTransform.X = x;
         _translateTransform.Y = y;
 
-        // Обновляем DPI Translate
-        double dpi = this.GetVisualRoot()?.RenderScaling ?? 1.0;
-        _dpiTranslateTransform.X = x * dpi;
-        _dpiTranslateTransform.Y = y * dpi;
+        // 2. Считаем DPI-коррекцию (Workaround из issue #11959)
+        var root = this.GetVisualRoot();
+        double renderScaling = root?.RenderScaling ?? 1.0;
+
+        // Важно: Snap to pixels (округление до ближайшего физического пикселя)
+        // Это предотвращает размытие линий сетки.
+        _dpiTranslateTransform.X = Math.Round(x * renderScaling) / renderScaling;
+        _dpiTranslateTransform.Y = Math.Round(y * renderScaling) / renderScaling;
+
+        // 3. СОЗДАЕМ НОВЫЕ ГРУППЫ (как в Nodify)
+        // Это решает проблему "статичной сетки". Если не пересоздать группу, 
+        // Binding на Brush может не подхватить изменения внутри существующей группы.
+        
+        var viewportGroup = new TransformGroup();
+        viewportGroup.Children.Add(_scaleTransform);
+        viewportGroup.Children.Add(_translateTransform);
+        
+        // Присваиваем новое значение свойству
+        SetCurrentValue(ViewportTransformProperty, viewportGroup);
+
+        var dpiGroup = new TransformGroup();
+        dpiGroup.Children.Add(_scaleTransform);
+        dpiGroup.Children.Add(_dpiTranslateTransform);
+        
+        // Присваиваем новое значение свойству
+        SetCurrentValue(DpiScaledViewportTransformProperty, dpiGroup);
     }
+
+    #region Input Handling
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         if (e.Handled) return;
 
         double zoomFactor = 1.1;
-        double newZoom = e.Delta.Y > 0 ? ViewportZoom * zoomFactor : ViewportZoom / zoomFactor;
-        newZoom = Math.Max(GetValue(MinZoomProperty), Math.Min(GetValue(MaxZoomProperty), newZoom));
+        double prevZoom = ViewportZoom;
+        double newZoom = e.Delta.Y > 0 ? prevZoom * zoomFactor : prevZoom / zoomFactor;
 
-        if (Math.Abs(newZoom - ViewportZoom) > 0.001)
+        newZoom = Math.Max(MinZoom, Math.Min(MaxZoom, newZoom));
+
+        if (Math.Abs(newZoom - prevZoom) > 0.001)
         {
             Point mousePos = e.GetPosition(this);
-            Vector shift = (Vector)mousePos / ViewportZoom - (Vector)mousePos / newZoom;
-            
+
+            // Логика зума в точку курсора
+            Vector correction = (Vector)mousePos / prevZoom - (Vector)mousePos / newZoom;
+
             ViewportZoom = newZoom;
-            ViewportLocation += shift;
+            ViewportLocation += correction;
         }
+
         e.Handled = true;
     }
 
@@ -162,7 +188,7 @@ public class InfiniteCanvas : ContentControl
             _isPanning = true;
             _panStartMousePosition = e.GetPosition(this);
             _panStartViewportLocation = ViewportLocation;
-            
+
             e.Pointer.Capture(this);
             Cursor = new Cursor(StandardCursorType.Hand);
             e.Handled = true;
@@ -175,8 +201,10 @@ public class InfiniteCanvas : ContentControl
         if (!_isPanning) return;
 
         Point currentMousePos = e.GetPosition(this);
-        Vector diff = _panStartMousePosition - currentMousePos;
-        ViewportLocation = _panStartViewportLocation + (diff / ViewportZoom);
+        Vector diffScreen = _panStartMousePosition - currentMousePos;
+
+        // Пересчет экранного сдвига в логический
+        ViewportLocation = _panStartViewportLocation + (diffScreen / ViewportZoom);
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
@@ -189,4 +217,6 @@ public class InfiniteCanvas : ContentControl
             Cursor = Cursor.Default;
         }
     }
+
+    #endregion
 }

@@ -5,54 +5,153 @@
         xmlns:controls="clr-namespace:LayoutXYExample.Controls"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="LayoutXYExample.WindowInfiniteCanvas"
-        Title="Infinite Canvas">
+        Title="Infinite Canvas (Modern Style)">
 
     <Window.Resources>
-        <!-- Сетка -->
-        <Color x:Key="GridLinesColor">#333337</Color>
-        <Color x:Key="BackgroundColor">Green</Color>
+        <Color x:Key="BackgroundColor">#141417</Color>
+    
+        <Color x:Key="SmallLineColor">#26292E</Color>
+    
+        <Color x:Key="LargeLineColor">#3E4451</Color>
 
-        <SolidColorBrush x:Key="GridLinesBrush"
-                         Color="{DynamicResource GridLinesColor}" />
+        <SolidColorBrush x:Key="BackgroundBrush" Color="{DynamicResource BackgroundColor}" />
+        <SolidColorBrush x:Key="SmallLineBrush" Color="{DynamicResource SmallLineColor}" />
+        <SolidColorBrush x:Key="LargeLineBrush" Color="{DynamicResource LargeLineColor}" />
 
-        <SolidColorBrush x:Key="BackgroundBrush"
-                         Color="{DynamicResource BackgroundColor}" />
+        <GeometryDrawing x:Key="SmallGridGeometry">
+            <GeometryDrawing.Pen>
+                <Pen Brush="{StaticResource SmallLineBrush}" Thickness="1.0" />
+            </GeometryDrawing.Pen>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>M0,0 L20,0 M0,0 L0,20</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
 
-        <GeometryDrawing x:Key="SmallGridGeometry"
-                         Geometry="M0,0 L0,1 0.03,1 0.03,0.03 1,0.03 1,0 Z"
-                         Brush="{DynamicResource GridLinesBrush}" />
-
-        <GeometryDrawing x:Key="LargeGridGeometry"
-                         Geometry="M0,0 L0,1 0.015,1 0.015,0.015 1,0.015 1,0 Z"
-                         Brush="{DynamicResource GridLinesBrush}" />
+        <GeometryDrawing x:Key="LargeGridGeometry">
+            <GeometryDrawing.Pen>
+                <Pen Brush="{StaticResource LargeLineBrush}" Thickness="1.0" />
+            </GeometryDrawing.Pen>
+            <GeometryDrawing.Geometry>
+                <StreamGeometry>M0,0 L100,0 M0,0 L0,100</StreamGeometry>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
 
         <DrawingBrush x:Key="SmallGridLinesDrawingBrush"
                       TileMode="Tile"
-                      DestinationRect="0 0 30 30"
-                      TransformOrigin="0,0"
+                      DestinationRect="0 0 20 20"
                       Transform="{Binding DpiScaledViewportTransform, ElementName=Editor}"
                       Drawing="{StaticResource SmallGridGeometry}" />
 
         <DrawingBrush x:Key="LargeGridLinesDrawingBrush"
                       TileMode="Tile"
-                      Opacity="0.5"
-                      DestinationRect="0 0 150 150"
+                      DestinationRect="0 0 100 100"
                       Transform="{Binding DpiScaledViewportTransform, ElementName=Editor}"
                       Drawing="{StaticResource LargeGridGeometry}" />
-        
     </Window.Resources>
     
-    <Grid>
+    <Grid Background="{StaticResource BackgroundBrush}">
         
+        <Border IsHitTestVisible="False" 
+                Background="{StaticResource LargeGridLinesDrawingBrush}" />
 
         <controls:InfiniteCanvas x:Name="Editor"
                                  Background="{StaticResource SmallGridLinesDrawingBrush}">
             
             <Canvas Width="10000" Height="10000">
-                <Rectangle Canvas.Left="100" Canvas.Top="100" 
-                           Width="100" Height="50" Fill="CornflowerBlue"/>
-                <Ellipse Canvas.Left="300" Canvas.Top="200" 
-                         Width="80" Height="80" Fill="IndianRed"/>
+                
+                <Border Canvas.Left="400" Canvas.Top="300"
+                        Width="340"
+                        Background="#202020"
+                        BorderBrush="#383838"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="30"
+                        BoxShadow="0 10 20 0 #50000000">
+                    
+                    <StackPanel Spacing="20">
+                        
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Welcome Back" 
+                                       FontSize="24" 
+                                       FontWeight="Bold" 
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Please sign in to continue" 
+                                       FontSize="14" 
+                                       Foreground="#888888" 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Spacing="12">
+                            <TextBox Watermark="Email address"
+                                     CornerRadius="6"
+                                     Height="35"
+                                     Background="#2D2D2D"
+                                     BorderBrush="#404040"
+                                     Foreground="White"/>
+                            
+                            <TextBox Watermark="Password"
+                                     PasswordChar="•"
+                                     CornerRadius="6"
+                                     Height="35"
+                                     Background="#2D2D2D"
+                                     BorderBrush="#404040"
+                                     Foreground="White"/>
+                        </StackPanel>
+
+                        <Grid ColumnDefinitions="Auto, *">
+                            <CheckBox Grid.Column="0" 
+                                      Content="Remember me" 
+                                      Foreground="#AAAAAA"
+                                      FontSize="12"/>
+                            
+                            <TextBlock Grid.Column="1" 
+                                       Text="Forgot Password?" 
+                                       Foreground="#4C97FF"
+                                       Cursor="Hand"
+                                       FontSize="12"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Button Content="Sign In"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Height="40"
+                                CornerRadius="6"
+                                Background="#4C97FF"
+                                Foreground="White"
+                                FontWeight="SemiBold"
+                                BorderThickness="0"/>
+                        
+                        <Grid ColumnDefinitions="*,Auto,*" VerticalAlignment="Center">
+                            <Separator Grid.Column="0" Background="#444" Height="1"/>
+                            <TextBlock Grid.Column="1" Text="OR" Foreground="#666" FontSize="10" Margin="10,0"/>
+                            <Separator Grid.Column="2" Background="#444" Height="1"/>
+                        </Grid>
+
+                        <Button Content="Sign in with GitHub"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Height="35"
+                                CornerRadius="6"
+                                Background="#2D2D2D"
+                                BorderBrush="#404040"
+                                BorderThickness="1"
+                                Foreground="#CCCCCC"/>
+
+                    </StackPanel>
+                </Border>
+
+                <Border Canvas.Left="760" Canvas.Top="320"
+                        Background="#333333" CornerRadius="4" Padding="10"
+                        BoxShadow="2 2 10 0 #40000000">
+                    <TextBlock Text="← Main entry point" Foreground="#AAA" FontStyle="Italic"/>
+                </Border>
+                
+                <Line StartPoint="740,400" EndPoint="760,340" 
+                      Stroke="#666" StrokeThickness="1" StrokeDashArray="2,2"/>
+
             </Canvas>
             
         </controls:InfiniteCanvas>
