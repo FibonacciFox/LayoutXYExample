@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:LayoutXYExample.Controls"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="LayoutXYExample.WindowInfiniteCanvas"
+        Title="Infinite Canvas">
+
+    <Window.Resources>
+        <!-- Сетка -->
+        <Color x:Key="GridLinesColor">#333337</Color>
+        <Color x:Key="BackgroundColor">Green</Color>
+
+        <SolidColorBrush x:Key="GridLinesBrush"
+                         Color="{DynamicResource GridLinesColor}" />
+
+        <SolidColorBrush x:Key="BackgroundBrush"
+                         Color="{DynamicResource BackgroundColor}" />
+
+        <GeometryDrawing x:Key="SmallGridGeometry"
+                         Geometry="M0,0 L0,1 0.03,1 0.03,0.03 1,0.03 1,0 Z"
+                         Brush="{DynamicResource GridLinesBrush}" />
+
+        <GeometryDrawing x:Key="LargeGridGeometry"
+                         Geometry="M0,0 L0,1 0.015,1 0.015,0.015 1,0.015 1,0 Z"
+                         Brush="{DynamicResource GridLinesBrush}" />
+
+        <DrawingBrush x:Key="SmallGridLinesDrawingBrush"
+                      TileMode="Tile"
+                      DestinationRect="0 0 30 30"
+                      TransformOrigin="0,0"
+                      Transform="{Binding DpiScaledViewportTransform, ElementName=Editor}"
+                      Drawing="{StaticResource SmallGridGeometry}" />
+
+        <DrawingBrush x:Key="LargeGridLinesDrawingBrush"
+                      TileMode="Tile"
+                      Opacity="0.5"
+                      DestinationRect="0 0 150 150"
+                      Transform="{Binding DpiScaledViewportTransform, ElementName=Editor}"
+                      Drawing="{StaticResource LargeGridGeometry}" />
+        
+    </Window.Resources>
+    
+    <Grid>
+        
+
+        <controls:InfiniteCanvas x:Name="Editor"
+                                 Background="{StaticResource SmallGridLinesDrawingBrush}">
+            
+            <Canvas Width="10000" Height="10000">
+                <Rectangle Canvas.Left="100" Canvas.Top="100" 
+                           Width="100" Height="50" Fill="CornflowerBlue"/>
+                <Ellipse Canvas.Left="300" Canvas.Top="200" 
+                         Width="80" Height="80" Fill="IndianRed"/>
+            </Canvas>
+            
+        </controls:InfiniteCanvas>
+    </Grid>
+    
+</Window>
