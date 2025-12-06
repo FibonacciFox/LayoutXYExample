@@ -1,0 +1,96 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LayoutXYExample.ViewModels"
+             xmlns:layoutXyExample="clr-namespace:LayoutXYExample"
+
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="LayoutXYExample.Views.MainView"
+             x:DataType="vm:LayoutViewModel">
+
+    <Grid ColumnDefinitions="*, 320">
+        
+        <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="2" Background="#F0F0F0" Margin="10">
+            <Grid Name="TestContainer">
+                
+                <Border Background="CornflowerBlue"
+                        Cursor="Hand"
+                        
+                        Width="{Binding ElementWidth, Mode=TwoWay}"
+                        Height="{Binding ElementHeight, Mode=TwoWay}"
+                        
+                        HorizontalAlignment="{Binding HorizontalAlignment, Mode=TwoWay}"
+                        VerticalAlignment="{Binding VerticalAlignment, Mode=TwoWay}"
+                        
+                        layoutXyExample:Layout.X="{Binding ElementX, Mode=TwoWay}"
+                        layoutXyExample:Layout.Y="{Binding ElementY, Mode=TwoWay}"
+                        layoutXyExample:Layout.DesignX="{Binding DesignX, Mode=TwoWay}"
+                        layoutXyExample:Layout.DesignY="{Binding DesignY, Mode=TwoWay}"
+                        
+                        PointerPressed="OnPointerPressedProxy"
+                        PointerMoved="OnPointerMovedProxy"
+                        PointerReleased="OnPointerReleasedProxy">
+                    
+                    <TextBlock Text="Перетаскивай меня" Foreground="White" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Column="1" Margin="10" Spacing="10">
+            <TextBlock Text="Настройки Позиционирования" FontWeight="Bold" FontSize="18"/>
+            <Separator/>
+
+            <TextBlock Text="Размеры (NaN = Auto)" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="W:" Width="20" VerticalAlignment="Center"/>
+                <NumericUpDown Value="{Binding ElementWidth}" FormatString="F0" Minimum="0" Maximum="2000" Increment="10" Width="140"/>
+                <Button Content="Auto" Command="{Binding SetAutoWidthCommand}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="H:" Width="20" VerticalAlignment="Center"/>
+                <NumericUpDown Value="{Binding ElementHeight}" FormatString="F0" Minimum="0" Maximum="2000" Increment="10" Width="140"/>
+                <Button Content="Auto" Command="{Binding SetAutoHeightCommand}"/>
+            </StackPanel>
+            
+            <Separator/>
+            
+            <TextBlock Text="Координаты (Parent)" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="X:" Width="20" VerticalAlignment="Center"/>
+                <NumericUpDown Value="{Binding ElementX}" FormatString="F0" Minimum="-1000" Maximum="1000" Increment="10" Width="140"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="Y:" Width="20" VerticalAlignment="Center"/>
+                <NumericUpDown Value="{Binding ElementY}" FormatString="F0" Minimum="-1000" Maximum="1000" Increment="10" Width="140"/>
+            </StackPanel>
+
+            <TextBlock Text="Координаты (Designer/Root)" FontWeight="Bold" Margin="0,10,0,0"/>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="DX:" Width="20" VerticalAlignment="Center"/>
+                <NumericUpDown Value="{Binding DesignX}" FormatString="F0" Minimum="-1000" Maximum="1000" Increment="10" Width="140"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="DY:" Width="20" VerticalAlignment="Center"/>
+                <NumericUpDown Value="{Binding DesignY}" FormatString="F0" Minimum="-1000" Maximum="1000" Increment="10" Width="140"/>
+            </StackPanel>
+
+            <Separator/>
+
+            <TextBlock Text="Выравнивание" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="Horz:" Width="40" VerticalAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding AlignmentOptions}" SelectedItem="{Binding HorizontalAlignment}" Width="120"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="Vert:" Width="40" VerticalAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding VerticalAlignmentOptions}" SelectedItem="{Binding VerticalAlignment}" Width="120"/>
+            </StackPanel>
+            
+            <Separator/>
+            <Button Content="СБРОС" Command="{Binding ResetPositionCommand}" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
